@@ -30,21 +30,23 @@ services:
       - ./docroot:/usr/share/nginx/html
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf
-#  app:
-#    container_name: minimal_sns_app
-# NOTE: for ruby
-#    build: app/ruby
-#    volumes:
-#      - socket:/var/run/unicorn/
-# NOTE: for go
-#    build: app/go
-#    volumes:
-#      - ./app/go:/app
-#    networks:
-#      - front
-#      - back
-#    environment:
-#      TZ: "Asia/Tokyo"
+  app:
+    container_name: minimal_sns_app
+    # NOTE: for ruby
+    #    build: app/ruby
+    #    volumes:
+    #      - socket:/var/run/unicorn/
+    # NOTE: for go
+    build: app/go
+    volumes:
+      - ./app/go:/app
+    ports:
+      - "1323:1323"
+    networks:
+      - front
+      - back
+    environment:
+      TZ: "Asia/Tokyo"
   db:
     image: mysql:latest
     container_name: db
