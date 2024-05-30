@@ -24,11 +24,7 @@ func main() {
 		return c.String(http.StatusOK, "minimal_sns_app")
 	})
 	e.GET("/get_friend_list", handler.GetFriendList)
-	e.GET("/get_friend_of_friend_list", func(c echo.Context) error {
-		// FIXME
-		return nil
-	})
-
+	e.GET("/get_friend_of_friend_list", handler.GetFriendOfFriendList)
 	e.GET("/get_friend_of_friend_list_paging", func(c echo.Context) error {
 		// FIXME
 		return nil
