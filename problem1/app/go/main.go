@@ -25,10 +25,7 @@ func main() {
 	})
 	e.GET("/get_friend_list", handler.GetFriendList)
 	e.GET("/get_friend_of_friend_list", handler.GetFriendOfFriendList)
-	e.GET("/get_friend_of_friend_list_paging", func(c echo.Context) error {
-		// FIXME
-		return nil
-	})
+	e.GET("/get_friend_of_friend_list_paging", handler.GetFriendOfFriendListPaging)
 
 	e.Logger.Fatal(e.Start(":" + strconv.Itoa(conf.Server.Port)))
 }
