@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"problem1/configs"
+	"problem1/database"
 	"strconv"
 
 	"problem1/handler"
@@ -13,7 +14,7 @@ import (
 )
 
 func main() {
-	conf := configs.Get()
+	defer database.Close()
 
 	e := echo.New()
 
@@ -28,5 +29,5 @@ func main() {
 	e.GET("/get_friend_of_friend_list_paging", handler.GetFriendOfFriendListPaging)
 	e.POST("/add_friend", handler.AddFriend)
 
-	e.Logger.Fatal(e.Start(":" + strconv.Itoa(conf.Server.Port)))
+	e.Logger.Info(e.Start(":" + strconv.Itoa(configs.Get().Server.Port)))
 }

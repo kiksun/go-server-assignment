@@ -1,26 +1,37 @@
 package database
 
 import (
-	"database/sql"
-	"log"
+	"fmt"
 	"problem1/configs"
+	"problem1/model"
+	"sync"
+
+	_ "github.com/go-sql-driver/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func ConnectDB() (*sql.DB, error) {
-	conf := configs.Get()
+var (
+	db   *gorm.DB
+	once sync.Once
+)
 
-	db, err := sql.Open(conf.DB.Driver, conf.DB.DataSource)
-	if err != nil {
-		panic(err)
-	}
-
-	return db, nil
+func GetDB() *gorm.DB {
+	once.Do(func() {
+		Gdb, err := gorm.Open(mysql.Open(configs.Get().DB.DataSource), &gorm.Config{PrepareStmt: true})
+		if err != nil {
+			fmt.Println(err)
+		}
+		Gdb.AutoMigrate(&model.User{})
+		db = Gdb
+	})
+	return db
 }
 
-func CloseDB(db *sql.DB) {
-	err := db.Close()
+func Close() {
+	db, err := db.DB()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
-
+	db.Close()
 }
