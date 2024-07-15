@@ -5,6 +5,7 @@ import (
 	"problem1/configs"
 	"problem1/model"
 	"sync"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
@@ -24,6 +25,14 @@ func GetDB() *gorm.DB {
 		}
 		Gdb.AutoMigrate(&model.User{})
 		db = Gdb
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			fmt.Println("failed to get database object: %v", err)
+		}
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetConnMaxLifetime(time.Hour)
 	})
 	return db
 }

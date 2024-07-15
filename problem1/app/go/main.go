@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"problem1/configs"
 	"problem1/database"
-	"strconv"
-
 	"problem1/handler"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
