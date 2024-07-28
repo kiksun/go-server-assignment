@@ -1,37 +1,44 @@
 package handler
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"problem1/database"
+	"problem1/model"
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
-const addFriendQuery = `INSERT INTO friend_link  (user1_id, user2_id) VALUES (?,?)`
-
 func AddFriend(c echo.Context) error {
-	userId, err := strconv.Atoi(c.QueryParam("userID"))
+	uID, err := strconv.Atoi(c.QueryParam("userID"))
 	if err != nil {
-		log.Fatal(err)
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "userID is invlid value"})
 	}
-	friendId, err := strconv.Atoi(c.QueryParam("friendID"))
+	fID, err := strconv.Atoi(c.QueryParam("friendID"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "friendID is invlid value"})
 	}
+	DB := database.GetDB()
+	var friendLink model.FriendLink
 
-	db, err := database.ConnectDB()
+	err = DB.Table("friend_link").
+		Where("user1_id = ? AND user2_id = ? OR user1_id = ? AND user2_id = ?", uID, fID, uID, fID).
+		First(&friendLink).Error
 	if err != nil {
-		log.Fatal(err)
+		if err == gorm.ErrRecordNotFound {
+			newFriend := model.FriendLink{User1ID: uID, User2ID: fID}
+			DB.Create(&newFriend)
+			fmt.Println("New user added:", newFriend)
+		} else {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("FriendLink already exists:", friendLink)
+		return c.JSON(http.StatusOK, "friend already exists")
 	}
 
-	_, err = db.Exec(addFriendQuery, userId, friendId)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Failed to insert into database"})
-	}
-
-	return c.JSON(http.StatusOK, map[string]string{"message": "Friend added successfully"})
+	return c.JSON(http.StatusOK, "add friend success")
 }

@@ -11,25 +11,25 @@ import (
 )
 
 func GetFriendOfFriendListPaging(c echo.Context) error {
-	id, err := strconv.Atoi(c.QueryParam("ID"))
+	ID, err := strconv.Atoi(c.QueryParam("ID"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid ID Value")
 	}
 
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	l, err := strconv.Atoi(c.QueryParam("limit"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid limit Value")
 	}
 
-	page, err := strconv.Atoi(c.QueryParam("page"))
-	if err != nil || page <= 0 {
+	p, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil || p <= 0 {
 		return c.JSON(http.StatusBadRequest, "Invalid page Value")
 	}
 
-	offset := (page - 1) * limit
-	db := database.GetDB()
+	o := (p - 1) * l
+	DB := database.GetDB()
 
-	friendOfFriendList, err := handlerUtil.GetFriendsOfFriends(db, id, &limit, &offset)
+	friendOfFriendList, err := handlerUtil.GetFriendsOfFriends(DB, ID, &l, &o)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}

@@ -23,12 +23,12 @@ func GetDB() *gorm.DB {
 		if err != nil {
 			fmt.Println(err)
 		}
-		Gdb.AutoMigrate(&model.User{})
+		Gdb.AutoMigrate(&model.User{}, &model.FriendLink{})
 		db = Gdb
 
 		sqlDB, err := db.DB()
 		if err != nil {
-			fmt.Println("failed to get database object: %v", err)
+			fmt.Println("failed to get database object: ?", err)
 		}
 		sqlDB.SetMaxIdleConns(10)
 		sqlDB.SetMaxOpenConns(100)

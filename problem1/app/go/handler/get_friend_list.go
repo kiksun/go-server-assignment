@@ -12,14 +12,13 @@ import (
 )
 
 func GetFriendList(c echo.Context) error {
-	id, err := strconv.Atoi(c.QueryParam("ID"))
+	ID, err := strconv.Atoi(c.QueryParam("ID"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid ID Value")
 	}
 
-	db := database.GetDB()
-
-	friendList, err := handler_util.GetFriends(db, id)
+	DB := database.GetDB()
+	friendList, err := handler_util.GetFriends(DB, ID)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
