@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
+	"problem1/cache"
 	"problem1/database"
 	handlerUtil "problem1/handler/util"
 	"strconv"
@@ -26,6 +28,12 @@ func GetFriendOfFriendListPaging(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Invalid page Value")
 	}
 
+	cacheKey := fmt.Sprintf("getFriendOfFriend_ID:%d_limit:%d_page:%d", ID, l, p)
+	cacheValue, f := cache.GetCacheValue(cacheKey)
+	if f {
+		return c.JSON(http.StatusOK, cacheValue)
+	}
+
 	o := (p - 1) * l
 	DB := database.GetDB()
 
@@ -33,6 +41,7 @@ func GetFriendOfFriendListPaging(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
+	cache.SetCacheValue(cacheKey, friendOfFriendList)
 
 	return c.JSON(http.StatusOK, friendOfFriendList)
 }
