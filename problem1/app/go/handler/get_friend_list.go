@@ -1,49 +1,37 @@
 package handler
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"problem1/cache"
 	"problem1/database"
-	"problem1/model"
+	handler_util "problem1/handler/util"
+
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 )
 
-const getFriendListQuery = `
-              SELECT user_id , name
-			  FROM users 
-			  JOIN friend_link ON (user_id = user2_id AND user1_id = ?) OR (user_id = user1_id AND user2_id = ?)
-			  `
-
 func GetFriendList(c echo.Context) error {
-	id, err := strconv.Atoi(c.QueryParam("ID"))
+	ID, err := strconv.Atoi(c.QueryParam("ID"))
 	if err != nil {
-		log.Fatal(err)
+		return c.JSON(http.StatusBadRequest, "Invalid ID Value")
 	}
 
-	db, err := database.ConnectDB()
-	if err != nil {
-		log.Fatal(err)
+	cacheKey := fmt.Sprintf("getFriend_ID:%d", ID)
+	cacheValue, f := cache.GetCacheValue(cacheKey)
+	if f {
+		fmt.Println("cache return")
+		return c.JSON(http.StatusOK, cacheValue)
 	}
-	defer database.CloseDB(db)
 
-	rows, err := db.Query(getFriendListQuery, id, id)
+	DB := database.GetDB()
+	friendList, err := handler_util.GetFriends(DB, ID)
 	if err != nil {
-		log.Fatal(err)
+		return c.JSON(http.StatusBadRequest, err)
 	}
-	defer rows.Close()
-
-	var friendList []model.User
-	for rows.Next() {
-		var user model.User
-		err := rows.Scan(&user.UserID, &user.Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		friendList = append(friendList, user)
-	}
+	cache.SetCacheValue(cacheKey, friendList)
 
 	return c.JSON(http.StatusOK, friendList)
 }

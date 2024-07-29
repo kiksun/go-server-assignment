@@ -3,9 +3,9 @@ package main
 import (
 	"net/http"
 	"problem1/configs"
-	"strconv"
-
+	"problem1/database"
 	"problem1/handler"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	conf := configs.Get()
+	defer database.Close()
 
 	e := echo.New()
 
@@ -28,5 +28,5 @@ func main() {
 	e.GET("/get_friend_of_friend_list_paging", handler.GetFriendOfFriendListPaging)
 	e.POST("/add_friend", handler.AddFriend)
 
-	e.Logger.Fatal(e.Start(":" + strconv.Itoa(conf.Server.Port)))
+	e.Logger.Info(e.Start(":" + strconv.Itoa(configs.Get().Server.Port)))
 }
