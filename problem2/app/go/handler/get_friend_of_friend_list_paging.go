@@ -1,67 +1,47 @@
 package handler
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"problem1/cache"
 	"problem1/database"
-	"problem1/model"
+	handlerUtil "problem1/handler/util"
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 )
 
-const getFriendOfFriendListPagingQuery = `
-			  SELECT user_id, name 
-			  FROM users
-			  WHERE user_id IN( SELECT user2_id FROM friend_link WHERE user1_id = ANY( SELECT user_id FROM users JOIN friend_link ON (user_id = user2_id AND user1_id = ?) OR (user_id = user1_id AND user2_id = ?)))
-			  AND user_id NOT IN (SELECT user2_id FROM block_list WHERE user1_id = ?) 
-			  AND user_id Not IN (SELECT user_id FROM users JOIN friend_link ON (user_id = user2_id AND user1_id = ?) OR (user_id = user1_id AND user2_id = ?))
-			  AND user_id != ?
-			  LIMIT ? OFFSET ?
-			  `
-
 func GetFriendOfFriendListPaging(c echo.Context) error {
-	id, err := strconv.Atoi(c.QueryParam("ID"))
+	ID, err := strconv.Atoi(c.QueryParam("ID"))
 	if err != nil {
-		log.Fatal(err)
+		return c.JSON(http.StatusBadRequest, "Invalid ID Value")
 	}
 
-	limit, err := strconv.Atoi(c.QueryParam("limit"))
+	l, err := strconv.Atoi(c.QueryParam("limit"))
 	if err != nil {
-		log.Fatal(err)
+		return c.JSON(http.StatusBadRequest, "Invalid limit Value")
 	}
 
-	page, err := strconv.Atoi(c.QueryParam("page"))
+	p, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil || p <= 0 {
+		return c.JSON(http.StatusBadRequest, "Invalid page Value")
+	}
+
+	cacheKey := fmt.Sprintf("getFriendOfFriend_ID:%d_limit:%d_page:%d", ID, l, p)
+	cacheValue, f := cache.GetCacheValue(cacheKey)
+	if f {
+		return c.JSON(http.StatusOK, cacheValue)
+	}
+
+	o := (p - 1) * l
+	DB := database.GetDB()
+
+	friendOfFriendList, err := handlerUtil.GetFriendsOfFriends(DB, ID, &l, &o)
 	if err != nil {
-		log.Fatal(err)
+		return c.JSON(http.StatusBadRequest, err)
 	}
-	if page <= 0 {
-		log.Fatal("Invalid Value")
-	}
+	cache.SetCacheValue(cacheKey, friendOfFriendList)
 
-	db, err := database.ConnectDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var friendOfFriendList []model.User
-	var offset = (page - 1) * limit
-	rows, err := db.Query(getFriendOfFriendListPagingQuery, id, id, id, id, id, id, limit, offset)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var friendOfFriend model.User
-		err := rows.Scan(&friendOfFriend.UserID, &friendOfFriend.Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		friendOfFriendList = append(friendOfFriendList, friendOfFriend)
-	}
-
-	defer database.CloseDB(db)
 	return c.JSON(http.StatusOK, friendOfFriendList)
 }
